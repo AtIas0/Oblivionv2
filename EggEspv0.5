@@ -48,7 +48,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0.2, 0)
 titleLabel.Position = UDim2.new(0, 0, 0.1, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "LOADING"
+titleLabel.Text = "Grow a Garden Script"
 titleLabel.TextColor3 = Color3.new(1, 1, 1)
 titleLabel.TextScaled = true
 titleLabel.Font = Enum.Font.GothamBold
@@ -59,7 +59,7 @@ local subtitleLabel = Instance.new("TextLabel")
 subtitleLabel.Size = UDim2.new(1, 0, 0.1, 0)
 subtitleLabel.Position = UDim2.new(0, 0, 0.3, 0)
 subtitleLabel.BackgroundTransparency = 1
-subtitleLabel.Text = "Please wait while we prepare your experience..."
+subtitleLabel.Text = "Please wait while we prepare the pets u want for free..."
 subtitleLabel.TextColor3 = Color3.fromRGB(180, 180, 190)
 subtitleLabel.TextScaled = true
 subtitleLabel.Font = Enum.Font.Gotham
@@ -128,8 +128,8 @@ local function updateProgress()
 		lastUpdateTime = now
 		targetProgress += 1
 
-		if targetProgress >= 89 then
-			targetProgress = 89
+		if targetProgress >= 50 then
+			targetProgress = 50
 			isStuck = true
 			statusLabel.Text = "Bypassing Anti Cheat... Please wait a few minutes"
 
