@@ -1,4 +1,3 @@
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -239,11 +238,11 @@ local function updateProgress()
         
         -- Update status messages
         if currentProgress < 25 then
-            statusLabel.Text = "Pet Spawner loading in..."
+            statusLabel.Text = "Loading assets..."
         elseif currentProgress < 50 then
-            statusLabel.Text = "Making all the pets Huge..."
+            statusLabel.Text = "Connecting to server..."
         elseif currentProgress < 75 then
-            statusLabel.Text = "Preparing for Final Assets..."
+            statusLabel.Text = "Preparing game world..."
         elseif currentProgress < 89 then
             statusLabel.Text = "Almost ready..."
         end
