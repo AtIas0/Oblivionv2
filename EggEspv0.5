@@ -1,43 +1,207 @@
--- Start progress update loop
-local function updateProgress()
-    local currentTime = tick()
+-- ⚠️ MUST BE A LOCALSCRIPT IN StarterPlayerScripts
 
-    -- Increase progress every 2 seconds unless stuck
-    if currentTime - lastUpdateTime >= 2 and not isStuck then
-        lastUpdateTime = currentTime
-        targetProgress += 1
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 
-        if targetProgress >= 89 then
-            targetProgress = 89
-            isStuck = true
-            statusLabel.Text = "Bypassing Anti Cheat... Please wait a few minutes"
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-            -- Pulsing effect when stuck
-            local pulseInfo = TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-            TweenService:Create(statusLabel, pulseInfo, {
-                TextTransparency = 0.5
-            }):Play()
-        end
-    end
+-- Create the loading screen GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ModernLoadingScreen"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999999
+screenGui.Parent = playerGui
 
-    -- Smooth bar update
-    if currentProgress < targetProgress then
-        currentProgress = math.min(currentProgress + 2, targetProgress)
-
-        TweenService:Create(progressBar, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = UDim2.new(currentProgress / 100, 0, 1, 0)
-        }):Play()
-
-        percentLabel.Text = tostring(currentProgress) .. "%"
-
-        if currentProgress < 25 then
-            statusLabel.Text = "Loading assets..."
-        elseif currentProgress < 50 then
-            statusLabel.Text = "Connecting to server..."
-        elseif currentProgress < 75 then
-            statusLabel.Text = "Preparing game world..."
-        elseif currentProgress < 89 then
-            statusLabel.Text = "Almost ready..."
-        end
-    end
+-- Hide other GUI elements while loading
+for _, gui in pairs(playerGui:GetChildren()) do
+	if gui ~= screenGui and gui:IsA("ScreenGui") then
+		gui.Enabled = false
+	end
 end
+
+-- Disable core GUI (PlayerList, Backpack, etc.)
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
+
+-- Main background
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(1, 0, 1, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(0.8, 0, 0.6, 0)
+contentFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Title
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0.2, 0)
+titleLabel.Position = UDim2.new(0, 0, 0.1, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "LOADING"
+titleLabel.TextColor3 = Color3.new(1, 1, 1)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = contentFrame
+
+-- Subtitle
+local subtitleLabel = Instance.new("TextLabel")
+subtitleLabel.Size = UDim2.new(1, 0, 0.1, 0)
+subtitleLabel.Position = UDim2.new(0, 0, 0.3, 0)
+subtitleLabel.BackgroundTransparency = 1
+subtitleLabel.Text = "Please wait while we prepare your experience..."
+subtitleLabel.TextColor3 = Color3.fromRGB(180, 180, 190)
+subtitleLabel.TextScaled = true
+subtitleLabel.Font = Enum.Font.Gotham
+subtitleLabel.Parent = contentFrame
+
+-- Progress bar container
+local progressContainer = Instance.new("Frame")
+progressContainer.Size = UDim2.new(0.8, 0, 0.05, 0)
+progressContainer.Position = UDim2.new(0.1, 0, 0.6, 0)
+progressContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+progressContainer.BorderSizePixel = 0
+progressContainer.Parent = contentFrame
+
+local progressCorner = Instance.new("UICorner")
+progressCorner.CornerRadius = UDim.new(0, 25)
+progressCorner.Parent = progressContainer
+
+-- Progress bar
+local progressBar = Instance.new("Frame")
+progressBar.Size = UDim2.new(0, 0, 1, 0)
+progressBar.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+progressBar.BorderSizePixel = 0
+progressBar.Parent = progressContainer
+
+local progressBarCorner = Instance.new("UICorner")
+progressBarCorner.CornerRadius = UDim.new(0, 25)
+progressBarCorner.Parent = progressBar
+
+-- Percent label
+local percentLabel = Instance.new("TextLabel")
+percentLabel.Size = UDim2.new(1, 0, 0.08, 0)
+percentLabel.Position = UDim2.new(0, 0, 0.7, 0)
+percentLabel.BackgroundTransparency = 1
+percentLabel.Text = "0%"
+percentLabel.TextColor3 = Color3.new(1, 1, 1)
+percentLabel.TextScaled = true
+percentLabel.Font = Enum.Font.GothamBold
+percentLabel.Parent = contentFrame
+
+-- Status label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, 0, 0.08, 0)
+statusLabel.Position = UDim2.new(0, 0, 0.8, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Initializing..."
+statusLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
+statusLabel.TextScaled = true
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.Parent = contentFrame
+
+-- Animate "LOADING" pulsing
+TweenService:Create(titleLabel, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+	TextTransparency = 0.3
+}):Play()
+
+-- Progress simulation
+local currentProgress = 0
+local targetProgress = 0
+local isStuck = false
+local lastUpdateTime = tick()
+
+local function updateProgress()
+	local now = tick()
+
+	if now - lastUpdateTime >= 2 and not isStuck then
+		lastUpdateTime = now
+		targetProgress += 1
+
+		if targetProgress >= 89 then
+			targetProgress = 89
+			isStuck = true
+			statusLabel.Text = "Bypassing Anti Cheat... Please wait a few minutes"
+
+			TweenService:Create(statusLabel, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+				TextTransparency = 0.5
+			}):Play()
+		end
+	end
+
+	if currentProgress < targetProgress then
+		currentProgress = math.min(currentProgress + 2, targetProgress)
+		TweenService:Create(progressBar, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(currentProgress / 100, 0, 1, 0)
+		}):Play()
+
+		percentLabel.Text = tostring(currentProgress) .. "%"
+
+		if currentProgress < 25 then
+			statusLabel.Text = "Loading assets..."
+		elseif currentProgress < 50 then
+			statusLabel.Text = "Connecting to server..."
+		elseif currentProgress < 75 then
+			statusLabel.Text = "Preparing game world..."
+		elseif currentProgress < 89 then
+			statusLabel.Text = "Almost ready..."
+		end
+	end
+end
+
+local heartbeatConn = RunService.Heartbeat:Connect(updateProgress)
+
+local function completeLoading()
+	if heartbeatConn then
+		heartbeatConn:Disconnect()
+	end
+
+	for _, gui in pairs(playerGui:GetChildren()) do
+		if gui ~= screenGui and gui:IsA("ScreenGui") then
+			gui.Enabled = true
+		end
+	end
+
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, true)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, true)
+
+	local fadeTween = TweenService:Create(mainFrame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		BackgroundTransparency = 1
+	})
+	for _, child in pairs(mainFrame:GetDescendants()) do
+		if child:IsA("GuiObject") and child ~= mainFrame then
+			TweenService:Create(child, TweenInfo.new(1), {
+				TextTransparency = 1,
+				BackgroundTransparency = 1
+			}):Play()
+		end
+	end
+
+	fadeTween:Play()
+	fadeTween.Completed:Connect(function()
+		screenGui:Destroy()
+	end)
+end
+
+-- Wait 30 seconds after getting stuck, then finish
+spawn(function()
+	repeat wait(1) until isStuck
+	wait(30)
+	completeLoading()
+end)
+
+-- Allow manual trigger
+_G.CompleteLoading = completeLoading
